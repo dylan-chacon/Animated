@@ -1,11 +1,14 @@
-import Card from '@/components/Card/Card';
 import { AnimatedListScreenProps, RootStackParamList } from '@/navigation/types';
 import { Character } from '@/types/data';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import React, { useCallback } from 'react';
-import { ActivityIndicator, Dimensions, Text, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { Dimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import RenderItem, { CardItem } from '@/app/components/RenderItem/RenderItem';
+import FooterLoader from '@/app/components/FooterLoader/FooterLoader';
+import LoadingScreen from '@/app/components/LoadingScreen/LoadingScreen';
+import ErrorScreen from '@/app/components/ErrorScreen/ErrorScreen';
 import { useAnimatedScroll } from '../../hooks/useAnimatedScroll';
 import { useFetchCharacters } from '../../hooks/useFetchCharacters';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -17,37 +20,6 @@ const ITEM_SPACING = 20;
 const SIDE_PADDING = (width - ITEM_WIDTH - ITEM_SPACING) / 2;
 
 const AnimatedFlatList = Animated.FlatList;
-
-interface CardItem {
-  id: string;
-  image: string;
-  title: string;
-  character: Character;
-}
-
-const RenderItem = React.memo(({ 
-  item, 
-  index, 
-  onPress, 
-  useGetAnimatedStyle 
-}: { 
-  item: CardItem;
-  index: number;
-  onPress: () => void;
-  useGetAnimatedStyle: (index: number) => any;
-}) => {
-  const animatedCardStyle = useGetAnimatedStyle(index);
-  
-  return (
-    <Card
-      item={item}
-      style={animatedCardStyle}
-      onPress={onPress}
-    />
-  );
-});
-
-RenderItem.displayName = 'RenderItem';
 
 const AnimatedListScreen: React.FC<AnimatedListScreenProps> = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -62,23 +34,37 @@ const AnimatedListScreen: React.FC<AnimatedListScreenProps> = () => {
     error 
   } = useFetchCharacters();
 
-  const cardItems: CardItem[] = characters.map((character) => ({
-    id: character.id.toString(),
-    image: character.image,
-    title: character.name,
-    character: character
-  }));
+  const cardItems: CardItem[] = useMemo(() => 
+    characters.map((character) => ({
+      id: character.id.toString(),
+      image: character.image,
+      title: character.name,
+      character: character
+    })), [characters]
+  );
+
+  const contentContainerStyle = useMemo(() => [
+    styles.listContent, 
+    { 
+      paddingLeft: SIDE_PADDING,
+      paddingRight: SIDE_PADDING
+    }
+  ], []);
+
+  const handleItemPress = useCallback((character: Character) => {
+    navigation.navigate('Details', { item: character });
+  }, [navigation]);
 
   const renderItem = useCallback(({ item, index }: { item: CardItem, index: number }) => {
     return (
       <RenderItem
         item={item}
         index={index}
-        onPress={() => navigation.navigate('Details', { item: item.character })}
+        onPress={() => handleItemPress(item.character)}
         useGetAnimatedStyle={useGetAnimatedStyle}
       />
     );
-  }, [navigation, useGetAnimatedStyle]);
+  }, [handleItemPress, useGetAnimatedStyle]);
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isLoading) {
@@ -86,23 +72,19 @@ const AnimatedListScreen: React.FC<AnimatedListScreenProps> = () => {
     }
   }, [hasNextPage, isLoading, fetchNextPage]);
 
+  const keyExtractor = useCallback((item: CardItem) => item.id, []);
+
+  const listFooterComponent = useMemo(() => 
+    isLoading ? <FooterLoader /> : null, 
+    [isLoading]
+  );
+
   if (isLoading && characters.length === 0) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={styles.loadingText}>Cargando personajes...</Text>
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (isError) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorText}>
-          Error al cargar los datos: {error?.message}
-        </Text>
-      </View>
-    );
+    return <ErrorScreen error={error} />;
   }
 
   return (
@@ -110,32 +92,30 @@ const AnimatedListScreen: React.FC<AnimatedListScreenProps> = () => {
       <AnimatedFlatList
         data={cardItems}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         snapToInterval={ITEM_WIDTH + ITEM_SPACING}
         snapToAlignment="start"
-        contentContainerStyle={[
-          styles.listContent, 
-          { 
-            paddingLeft: SIDE_PADDING,
-            paddingRight: SIDE_PADDING
-          }
-        ]}
+        contentContainerStyle={contentContainerStyle}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          isLoading ? (
-            <View style={styles.footerLoader}>
-              <ActivityIndicator size="small" color="#0000ff" />
-            </View>
-          ) : null
-        }
+        ListFooterComponent={listFooterComponent}
+        removeClippedSubviews
+        maxToRenderPerBatch={5}
+        windowSize={10}
+        initialNumToRender={3}
+        updateCellsBatchingPeriod={50}
+        getItemLayout={(data, index) => ({
+          length: ITEM_WIDTH + ITEM_SPACING,
+          offset: (ITEM_WIDTH + ITEM_SPACING) * index,
+          index,
+        })}
       />
     </View>
   );
 };
 
-export default AnimatedListScreen;
+export default React.memo(AnimatedListScreen);
