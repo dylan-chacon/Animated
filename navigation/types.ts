@@ -1,14 +1,9 @@
+import { Character } from '@/types/data';
 import { StackScreenProps } from '@react-navigation/stack';
-
-export type MockDataItem = {
-  id: string;
-  title: string;
-  image: string;
-};
 
 export type RootStackParamList = {
   AnimatedList: undefined;
-  Details: { item: MockDataItem };
+  Details: { item: Character };
 };
 
 export type DetailScreenProps = StackScreenProps<RootStackParamList, 'Details'>;

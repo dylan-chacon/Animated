@@ -9,20 +9,17 @@ const Stack = createStackNavigator<RootStackParamList>();
 const AppNavigator: React.FC = () => {
   return (
     <Stack.Navigator
+      initialRouteName="AnimatedList"
       screenOptions={{
-        headerStyle: {
-          backgroundColor: '#007BFF',
-        },
+        headerStyle: { backgroundColor: '#B6FF00' },
         headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerTitleStyle: { fontWeight: 'bold' },
       }}
     >
       <Stack.Screen 
         name="AnimatedList" 
         component={AnimatedListScreen} 
-        options={{ title: 'Lista Animada' }} 
+        options={{ title: 'Personajes de Rick y Morty' }} 
       />
       <Stack.Screen
         name="Details"
