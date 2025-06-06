@@ -13,6 +13,8 @@ import styles from './styles';
 
 const { width } = Dimensions.get('window');
 export const ITEM_WIDTH = width * 0.7;
+const ITEM_SPACING = 20;
+const SIDE_PADDING = (width - ITEM_WIDTH - ITEM_SPACING) / 2;
 
 const AnimatedFlatList = Animated.FlatList;
 
@@ -113,9 +115,15 @@ const AnimatedListScreen: React.FC<AnimatedListScreenProps> = () => {
         showsHorizontalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        snapToInterval={ITEM_WIDTH + 20}
-        decelerationRate="fast"
-        contentContainerStyle={[styles.listContent, { paddingHorizontal: (width - ITEM_WIDTH - 20) / 2 }]}
+        snapToInterval={ITEM_WIDTH + ITEM_SPACING}
+        snapToAlignment="start"
+        contentContainerStyle={[
+          styles.listContent, 
+          { 
+            paddingLeft: SIDE_PADDING,
+            paddingRight: SIDE_PADDING
+          }
+        ]}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={

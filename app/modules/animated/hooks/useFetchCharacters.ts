@@ -1,11 +1,12 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { Character } from '@/types/data';
 import { ApiResponse } from '@/types';
+import { Character } from '@/types/data';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchCharacters } from '../services/fetchCharacters';
 import { useCharacterStore } from '../store/useCharacterStore';
 
 export const useFetchCharacters = () => {
   const setCharacters = useCharacterStore((state) => state.setCharacters);
+  const addCharacters = useCharacterStore((state) => state.addCharacters);
 
   return useInfiniteQuery<ApiResponse<Character>, Error, ApiResponse<Character>, ['characters'], number>({
     queryKey: ['characters'],
@@ -13,7 +14,11 @@ export const useFetchCharacters = () => {
       const response = await fetchCharacters(pageParam);
       
       if (response.results) {
-        setCharacters(response.results);
+        if (pageParam === 1) {
+          setCharacters(response.results);
+        } else {
+          addCharacters(response.results);
+        }
       }
 
       return response;

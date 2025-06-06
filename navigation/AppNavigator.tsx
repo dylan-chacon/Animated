@@ -11,7 +11,7 @@ const AppNavigator: React.FC = () => {
     <Stack.Navigator
       initialRouteName="AnimatedList"
       screenOptions={{
-        headerStyle: { backgroundColor: '#B6FF00' },
+        headerStyle: { backgroundColor: '#88e23b' },
         headerTintColor: '#fff',
         headerTitleStyle: { fontWeight: 'bold' },
       }}
@@ -24,7 +24,7 @@ const AppNavigator: React.FC = () => {
       <Stack.Screen
         name="Details"
         component={DetailScreen}
-        options={({ route }) => ({ title: route.params.item.title })}
+        options={({ route }) => ({ title: route.params.item.name })}
       />
     </Stack.Navigator>
   );
